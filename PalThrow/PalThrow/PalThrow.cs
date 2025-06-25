@@ -98,7 +98,7 @@ namespace PalThrow
             // Wende Force direkt auf Bodyparts an
             foreach (Bodypart part in target.refs.ragdoll.partList)
             {
-                Vector3 force = direction * strength * UnityEngine.Random.Range(1f, 1.2f);
+                Vector3 force = direction * strength * UnityEngine.Random.Range(1f, 1.2f) * 200;
                 part.AddForce(force, ForceMode.Acceleration);
             }
 
