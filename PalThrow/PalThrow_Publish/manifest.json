@@ -1,0 +1,9 @@
+{
+    "name": "PalThrow",
+    "version_number": "1.6.4",
+    "website_url": "https://github.com/LamiiaSuu/PalThrowMod",
+    "description": "PalThrow mod for PEAK. This mod is a plugin using BepInEx. All players must have this mod or they will not be thrown. To throw, another player must stay on top of you while you are crouching. Then hold the x key. On release, the player on top of you will be launched in the direction you are looking.",
+    "dependencies": [
+        "BepInEx-BepInExPack_PEAK-5.4.2403"
+    ]
+}
