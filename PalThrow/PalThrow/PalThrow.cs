@@ -2,6 +2,7 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using Photon.Pun;
 using UnityEngine;
 
 namespace PalThrow
@@ -36,7 +37,7 @@ namespace PalThrow
         }
     }
 
-    public class PalThrowManager : MonoBehaviour
+    public class PalThrowManager : MonoBehaviourPun
     {
         private Character character;
 
@@ -49,7 +50,6 @@ namespace PalThrow
         {
             if (!character.IsLocal || !Input.GetKeyDown(KeyCode.X)) return;
 
-            // Search all characters to see who's standing on you
             foreach (var other in FindObjectsOfType<Character>())
             {
                 if (other == character) continue;
@@ -63,25 +63,11 @@ namespace PalThrow
             Plugin.Log.LogInfo("No character is currently standing on you.");
         }
 
-        internal void AddForce(Character target, Vector3 move, float minRandomMultiplier = 1f, float maxRandomMultiplier = 1f)
-        {
-            foreach (Bodypart part in target.refs.ragdoll.partList)
-            {
-                Vector3 force = move;
-                if (minRandomMultiplier != maxRandomMultiplier)
-                {
-                    force *= UnityEngine.Random.Range(minRandomMultiplier, maxRandomMultiplier);
-                }
-
-                part.AddForce(force, ForceMode.Acceleration);
-            }
-        }
-
         private void ThrowCharacter(Character target)
         {
-            if (target == null)
+            if (target == null || target.data.lastStoodOnPlayer != character)
             {
-                Plugin.Log.LogWarning("Tried to push a null character.");
+                Plugin.Log.LogWarning("Invalid throw target.");
                 return;
             }
 
@@ -93,17 +79,42 @@ namespace PalThrow
             }
 
             Vector3 direction = cam.transform.forward;
-            float strength = Plugin.ThrowStrength.Value; // z. B. Config-Wert
+            float strength = Plugin.ThrowStrength.Value;
 
-            // Wende Force direkt auf Bodyparts an
+            // Call Throw on all clients via RPC
+            photonView.RPC(nameof(ThrowCharacterRpc), RpcTarget.All, target.refs.view.ViewID, direction, strength);
+
+            // Prevent repeated throws
+            target.data.lastStoodOnPlayer = null;
+        }
+
+        [PunRPC]
+        public void ThrowCharacterRpc(int viewID, Vector3 direction, float strength)
+        {
+            Character target = FindCharacterByViewID(viewID);
+            if (target == null)
+            {
+                Plugin.Log.LogWarning("Target character not found via ViewID.");
+                return;
+            }
+
             foreach (Bodypart part in target.refs.ragdoll.partList)
             {
-                Vector3 force = direction * strength * UnityEngine.Random.Range(1f, 1.2f) * 200;
+                Vector3 force = direction * strength * UnityEngine.Random.Range(1f, 1.2f) * 2000;
                 part.AddForce(force, ForceMode.Acceleration);
             }
 
-            Plugin.Log.LogInfo($"Pushed {target.name} in direction {direction} with strength {strength}.");
+            Plugin.Log.LogInfo($"[RPC] Pushed {target.name} in direction {direction} with strength {strength}.");
         }
 
+        private Character FindCharacterByViewID(int viewID)
+        {
+            foreach (Character c in Character.AllCharacters)
+            {
+                if (c.refs.view != null && c.refs.view.ViewID == viewID)
+                    return c;
+            }
+            return null;
+        }
     }
 }
