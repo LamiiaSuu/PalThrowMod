@@ -7,12 +7,12 @@ using UnityEngine;
 
 namespace PalThrow
 {
-    [BepInPlugin("com.lamia.palthrow", "PalThrow", "1.4.2")]
+    [BepInPlugin("com.lamia.palthrow", "PalThrow", "1.6.4")]
     public class Plugin : BaseUnityPlugin
     {
         public static ConfigEntry<float> BaseThrowStrength;
         public static ConfigEntry<float> MaxChargeTime;
-        public static ConfigEntry<float> MaxStaminaCost;
+        public static ConfigEntry<float> StaminaCost;
         public static ConfigEntry<float> MinThrowStrength;
         public static ConfigEntry<float> MaxThrowStrength;
         internal static ManualLogSource Log;
@@ -20,9 +20,9 @@ namespace PalThrow
         private void Awake()
         {
             MaxChargeTime = Config.Bind("General", "MaxChargeTime", 3f, "Max charge time in seconds.");
-            MaxStaminaCost = Config.Bind("General", "MaxStaminaCost", 0.5f, "Max % of stamina bar drained over full charge.");
-            MinThrowStrength = Config.Bind("Throwing", "MinThrowStrength", 1.0f, "Throw strength at 0% charge.");
-            MaxThrowStrength = Config.Bind("Throwing", "MaxThrowStrength", 3.0f, "Throw strength at 100% charge.");
+            StaminaCost = Config.Bind("General", "StaminaCost", 1f, "Stamina drain per second multiplier.");
+            MinThrowStrength = Config.Bind("Throwing", "MinThrowStrength", 0.5f, "Throw strength at 0% charge.");
+            MaxThrowStrength = Config.Bind("Throwing", "MaxThrowStrength", 2.5f, "Throw strength at 100% charge.");
             Log = Logger;
             Log.LogInfo("PalThrow loaded.");
             Harmony harmony = new Harmony("com.lamia.palthrow");
@@ -96,8 +96,8 @@ namespace PalThrow
                     character.data.sinceUseStamina = 0f;
                     return; // Stop charging after max time
                 }
-                float staminaBarPercent = 1f * Plugin.MaxStaminaCost.Value;
-                float drainRate = (staminaBarPercent * Time.deltaTime) / Plugin.MaxChargeTime.Value;
+
+                float drainRate = Plugin.StaminaCost.Value *0.2f* Time.deltaTime;
                 if (character.GetTotalStamina() > drainRate)
                 {
                     character.AddStamina(-drainRate);
@@ -137,8 +137,6 @@ namespace PalThrow
             // Linearly interpolate strength based on percentage
             float strength = Mathf.Lerp(Plugin.MinThrowStrength.Value, Plugin.MaxThrowStrength.Value, chargePercent) * 1000;
 
-
-
             DoThrow(target, strength);
             lastThrowTime = Time.time;
             chargeTime = 0f;
@@ -148,7 +146,7 @@ namespace PalThrow
         {
             foreach (var other in FindObjectsOfType<Character>())
             {
-                if (other != character && other.data.lastStoodOnPlayer == character)
+                if (other != character && other.data.lastStoodOnPlayer == character && other.data.sinceStandOnPlayer <= 0.3f)
                     return other;
             }
             return null;
@@ -193,7 +191,7 @@ namespace PalThrow
                 part.AddForce(force, ForceMode.Acceleration);
             }
 
-            Plugin.Log.LogInfo($"[RPC] Pushed {target.name} in direction {direction} with strength {strength}.");
+            Plugin.Log.LogInfo($"[RPC] Threw {target.name} in direction {direction} with strength {strength}.");
         }
 
         private Character FindCharacterByViewID(int viewID)
