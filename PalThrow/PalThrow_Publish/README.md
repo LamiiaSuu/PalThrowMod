@@ -1,4 +1,4 @@
-# PalThrow (v1.6.4)
+# PalThrow (v1.6.5)
 
 **PalThrow** is a gameplay mod for **PEAK** that lets you throw other players who stand on top of you. Just hold **X** while someone is standing on your head to charge up, and release to launch them in the direction you are looking!
 
