@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace PalThrow
 {
-    [BepInPlugin("com.lamia.palthrow", "PalThrow", "1.6.4")]
+    [BepInPlugin("com.lamia.palthrow", "PalThrow", "1.6.5")]
     public class Plugin : BaseUnityPlugin
     {
         public static ConfigEntry<float> BaseThrowStrength;
@@ -15,10 +15,12 @@ namespace PalThrow
         public static ConfigEntry<float> StaminaCost;
         public static ConfigEntry<float> MinThrowStrength;
         public static ConfigEntry<float> MaxThrowStrength;
+        public static ConfigEntry<KeyCode> ThrowKey;
         internal static ManualLogSource Log;
 
         private void Awake()
         {
+            ThrowKey = Config.Bind("Controls", "ThrowKey", KeyCode.X,"The key to activate the slide");
             MaxChargeTime = Config.Bind("General", "MaxChargeTime", 3f, "Max charge time in seconds.");
             StaminaCost = Config.Bind("General", "StaminaCost", 1f, "Stamina drain per second multiplier.");
             MinThrowStrength = Config.Bind("Throwing", "MinThrowStrength", 0.5f, "Throw strength at 0% charge.");
@@ -81,7 +83,7 @@ namespace PalThrow
                 return;
             }
 
-            if (Input.GetKey(KeyCode.X))
+            if (Input.GetKey(Plugin.ThrowKey.Value))
             {
                 if (!isCharging)
                 {

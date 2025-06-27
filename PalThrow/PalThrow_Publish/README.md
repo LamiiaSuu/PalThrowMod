@@ -14,6 +14,7 @@ ALL PLAYERS MUST HAVE THE MOD TO BE THROWN.
 ## Configuration
 
 You can tweak throw strength, stamina cost, and charge time through the BepInEx config file (`BepInEx/config/com.lamia.palthrow.cfg`).  
+You can also change the Throwing Key in case you don't want to use **X**
 
 ## Installation
 
